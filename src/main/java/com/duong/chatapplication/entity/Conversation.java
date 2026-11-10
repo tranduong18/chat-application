@@ -4,6 +4,10 @@ import com.duong.chatapplication.common.ConversationType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "conversations")
 @NoArgsConstructor
@@ -20,4 +24,25 @@ public class Conversation extends BaseEntity{
 
     @Column(name = "participant_hash", unique = true)
     private String participantHash; // 1_2 1_2
+
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ConversationParticipant> participants = new ArrayList<>();
+
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<ChatMessage> messages = new ArrayList<>();
+
+    private String lastMessageId;
+
+    private String lastMessageContent;
+
+    private LocalDateTime lastMessageTime;
+
+    public void addParticipant(User user) {
+        participants.add(ConversationParticipant.builder()
+                .conversation(this)
+                .user(user)
+                .build());
+    }
 }
