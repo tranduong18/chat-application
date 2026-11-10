@@ -2,7 +2,9 @@ package com.duong.chatapplication.service;
 
 import com.duong.chatapplication.common.ConversationType;
 import com.duong.chatapplication.dto.request.CreateConversationRequest;
+import com.duong.chatapplication.dto.response.ConversationDetailResponse;
 import com.duong.chatapplication.dto.response.CreateConversationResponse;
+import com.duong.chatapplication.dto.response.PageResponse;
 import com.duong.chatapplication.entity.Conversation;
 import com.duong.chatapplication.entity.User;
 import com.duong.chatapplication.exception.AppException;
@@ -12,6 +14,9 @@ import com.duong.chatapplication.repository.ConversationRepository;
 import com.duong.chatapplication.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -91,5 +96,23 @@ public class ConversationService {
         conversationRepository.save(conversation);
 
         return ConversationMapper.toConversationResponse(creatorId, conversation);
+    }
+
+    public PageResponse<ConversationDetailResponse> getMyConversation(String userId, int page, int size){
+        Pageable pageable = PageRequest.of(page - 1, size);
+        Page<Conversation> conversationPage = conversationRepository.findAllByUserId(userId, pageable);
+
+        List<Conversation> conversations = conversationPage.getContent();
+        List<ConversationDetailResponse> responses = conversations.stream()
+                .map(conversation -> ConversationMapper.toConversationDetailResponse(userId, conversation))
+                .toList();
+
+        return PageResponse.<ConversationDetailResponse>builder()
+                .currentPage(page)
+                .pageSize(pageable.getPageSize())
+                .totalPages(conversationPage.getTotalPages())
+                .totalElements(conversationPage.getTotalElements())
+                .content(responses)
+                .build();
     }
 }
